@@ -1,0 +1,131 @@
+.people-selector {
+    display: flex;
+    flex-direction: column;
+}
+
+.tabs {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    background-color: #f5f5f5;
+    border-radius: 4px 4px 0 0;
+    padding: 0;
+    margin-bottom: 0;
+    border: 1px solid #e0e0e0;
+}
+
+.tab {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 1rem;
+    background: none;
+    border: none;
+    color: #666;
+    cursor: pointer;
+    font-size: 0.9rem;
+    position: relative;
+    transition: all 0.2s ease;
+    text-align: center;
+    border-right: 1px solid #e0e0e0;
+}
+
+.tab:last-child {
+    border-right: none;
+}
+
+.tab.active {
+    background-color: #fff;
+    color: #333;
+    font-weight: 500;
+    border-bottom: none;
+}
+
+.search-container {
+    position: relative;
+    background: #fff;
+    border-radius: 0 0 4px 4px;
+    border-top: none;
+}
+
+.search-input {
+    width: 100%;
+    padding: 1rem;
+    border: 1px solid #e2e2e2;
+    border-top: none;
+
+    font-size: 0.9rem;
+    background-color: #fff;
+    box-sizing: border-box;
+}
+
+.search-input:focus {
+    outline: none;
+}
+
+.search-results {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-top: none;
+    border-radius: 0 0 4px 4px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+}
+
+.search-result-item {
+    padding: 0.75rem 1rem;
+    border: none;
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+    color: #333;
+    font-size: 0.9rem;
+    background: none;
+}
+
+.search-result-item:hover {
+    background-color: #f5f5f5;
+}
+
+.selected-indicator {
+    display: none;
+}
+
+.selection-dot {
+    width: 8px;
+    height: 8px;
+    background-color: #29beaf;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 8px;
+    vertical-align: middle;
+}
+
+.loading {
+    padding: 10px;
+    text-align: center;
+    color: #666;
+}
+
+.error {
+    padding: 10px;
+    text-align: center;
+    color: #ff4444;
+    background-color: #ffeeee;
+    border-radius: 4px;
+    margin-top: 8px;
+}
+
+.no-results {
+    padding: 10px;
+    text-align: center;
+    color: #666;
+    background-color: #f5f5f5;
+    border: 1px solid #e0e0e0;
+    border-top: none;
+    border-radius: 0 0 4px 4px;
+}

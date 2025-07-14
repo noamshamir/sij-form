@@ -1,0 +1,124 @@
+.generated-files {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.file-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    border: 1px solid #e9ecef;
+}
+
+.file-name {
+    color: #495057;
+    font-size: 0.9rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 60%;
+}
+
+.file-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.action-button {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    background: none;
+    border: none;
+    padding: 0.5rem;
+    color: #6c757d;
+    cursor: pointer;
+    font-size: 0.8rem;
+    text-decoration: none;
+}
+
+/* View icon - grey */
+.action-button.view svg {
+    color: #6c757d;
+}
+
+.action-button.view:hover svg {
+    color: #212529;
+}
+
+/* Download icon - teal */
+.action-button.download svg {
+    color: #29beaf;
+}
+
+.action-button.download:hover svg {
+    color: #239e91;
+}
+
+/* Trash icon - red */
+.action-button.trash svg {
+    color: #dc3545;
+}
+
+.action-button.trash:hover svg {
+    color: #b02a37;
+}
+
+.action-button:hover {
+    color: #212529;
+}
+
+.action-button span {
+    margin-left: 4px;
+}
+
+.no-files {
+    color: #6c757d;
+    text-align: center;
+    padding: 1rem;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    border: 1px solid #e9ecef;
+}
+
+.files-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.files-title-section {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+h2 {
+    margin: 0;
+}
+
+.files-count {
+    font-size: 1.25rem;
+    color: #333;
+    font-weight: 500;
+}
+
+.download-all-button {
+    padding: 0.5rem 1rem;
+    background-color: #29beaf;
+    color: white;
+    border: none;
+    border-radius: 2rem;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background-color 0.2s ease;
+}
+
+.download-all-button:hover {
+    background-color: #239e91;
+}
