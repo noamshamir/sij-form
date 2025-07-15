@@ -1,21 +1,21 @@
 .file-uploader {
-    border: 2px dashed #e0e0e0;
+    border: 2px dashed #3d3d3d;
     border-radius: 8px;
     padding: 2rem;
     text-align: center;
-    background-color: #fafafa;
+    background: rgb(48, 49, 52);
     cursor: pointer;
     transition: all 0.2s ease;
 }
 
 .file-uploader:hover {
-    border-color: #29beaf;
-    background-color: #f5f5f5;
+    border-color: #c5fba3;
+    background-color: #2c2c2e;
 }
 
 .file-uploader.dragging {
-    border-color: #29beaf;
-    background-color: #e3f2fd;
+    border-color: #c5fba3;
+    background-color: rgba(197, 251, 163, 0.1);
 }
 
 .upload-content {
@@ -28,11 +28,11 @@
 .upload-icon {
     width: 32px;
     height: 32px;
-    color: #29beaf;
+    color: #c5fba3;
 }
 
 .upload-content p {
     margin: 0;
-    color: #666;
+    color: #c5ccd2;
     font-size: 0.9rem;
 }

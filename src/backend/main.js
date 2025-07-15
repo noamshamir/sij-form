@@ -42,26 +42,32 @@ export async function combineExcelFiles(fileList) {
  */
 export async function processExcelFiles(
     files,
-    plaintiffName,
-    defendantName,
-    attorneyName
-) {
+    plaintiffData,
+    defendantData,
+    attorneyData
+  ) {
     // Step 1: Combine inputs
     const combinedFile = await combineExcelFiles(files);
+
+    console.log('processExcelFiles()', {
+      plaintiffData,
+      defendantData,
+      attorneyData,
+    });
 
     // Step 2: Delegate to formAutomator.js logic
     // processFormsForBoth should return an array of { name: string, blob: Blob }
     const outputs = await processFormsForBoth(combinedFile, {
-        plaintiffName,
-        defendantName,
-        attorneyName,
-    });
+        plaintiffData,
+        defendantData,
+        attorneyData,
+      });
 
     // Step 3: Prefix filenames with plaintiff directory
-    return outputs.map((f) => ({
-        name: `${plaintiffName}/${f.name}`,
+    return outputs.map(f => ({
+        name: f.name,
         blob: f.blob,
-    }));
+      }));
 }
 
 /**

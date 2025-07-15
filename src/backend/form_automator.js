@@ -281,43 +281,42 @@ async function fillPdf(templateUrl, fields) {
  * @param {string} attorneyName
  * @returns {Promise<Array<{ name: string, blob: Blob }>>}
  */
+// src/backend/form_automator.js
+
 export async function processFormsForBoth(
-    excelFile,
-    { plaintiffName, defendantName, attorneyName }
+  excelFile, // still accepted for compatibility, but not used for lookup
+  { plaintiffData, defendantData, attorneyData }
 ) {
-    const rows = await getDicts(excelFile);
-    const findByName = (full) => {
-        const target = full.toLowerCase().trim();
-        return rows.find((r) => {
-            // Use empty string if middle name is undefined or empty
-            const parts = [
-                r["Beneficiary First Name"] || "",
-                r["Beneficiary Middle Name"] || "",
-                r["Beneficiary Last Name"] || "",
-            ].filter(Boolean); // drop any empty strings
-            const name = parts.join(" ").toLowerCase().trim();
-            return name === target;
-        });
-    };
-    const plaintiffRow = findByName(plaintiffName);
-    console.log(plaintiffRow);
-    const defendantRow = findByName(defendantName);
-    console.log(defendantRow);
-    const attorneyRow = findByName(attorneyName);
-    console.log(attorneyRow);
+  // — build a full_name for each from its first/middle/last parts —
+  const makeFullName = d =>
+    [d.first_name, d.middle_name, d.last_name].filter(Boolean).join(" ");
 
-    const plaintiffs = processPersonData(plaintiffRow, 0);
-    const defendants = processPersonData(defendantRow, 1);
-    const attorneys = processPersonData(attorneyRow, 2);
-    const formFieldsMap = getFormFields(plaintiffs, defendants, attorneys);
+  const plaintiffs = {
+    ...plaintiffData,
+    full_name: makeFullName(plaintiffData),
+  };
+  const defendants = {
+    ...defendantData,
+    full_name: makeFullName(defendantData),
+  };
+  const attorneys = {
+    ...attorneyData,
+    full_name: makeFullName(attorneyData),
+  };
 
-    const output = [];
-    for (const [key, url] of Object.entries(TEMPLATE_URLS)) {
-        const blob = await fillPdf(url, formFieldsMap[key]);
-        const filename = `${key}.${plaintiffs.full_name}.pdf`;
-        output.push({ name: filename, blob });
-    }
-    return output;
+  // Build the map of PDF fields → values
+  const formFieldsMap = getFormFields(plaintiffs, defendants, attorneys);
+
+  // Fill each template and collect outputs
+  const output = [];
+  for (const [key, url] of Object.entries(TEMPLATE_URLS)) {
+    const blob = await fillPdf(url, formFieldsMap[key]);
+    // now filename uses a real full_name
+    const filename = `${key}.${plaintiffs.full_name}.pdf`;
+    output.push({ name: filename, blob });
+  }
+
+  return output;
 }
 
 /**

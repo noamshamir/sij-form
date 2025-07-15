@@ -1,0 +1,79 @@
+/* GuideSection.css */
+.upload-container {
+    display: flex;
+    gap: 2rem;
+    max-width: 100%;
+    margin: 0 auto;
+    padding: 2rem;
+  }
+  
+  .upload-panel {
+    flex: 1;
+    border-right: 0.5px solid #838383;
+    padding: 1.5rem;
+    padding-right: 4rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  
+  .guide-panel {
+    flex: 1;
+    border-radius: 8px;
+    padding: 1.5rem;
+    color: #c5ccd2;
+  }
+  
+  .guide-steps {
+    counter-reset: step;
+    list-style: none;
+    padding: 0;
+  }
+  .guide-steps strong {
+  display: inline-block;   /* or use block if you want each on its own line */
+  padding-top: 5px;
+  color: #e0e0e0;
+}
+.guide-panel h2 {
+  padding-bottom: 15px;
+}
+  
+  .guide-steps li {
+    position: relative;
+    padding-left: 3rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .guide-steps li::before {
+    counter-increment: step;
+    content: counter(step);
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 2rem;
+    height: 2rem;
+    line-height: 2rem;
+    border-radius: 50%;
+    background: #c5fba3;
+    color: #121212;
+    text-align: center;
+    font-weight: bold;
+  }
+  
+  .guide-columns-grid {
+    min-height: 100px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 0.5rem 0.5rem;
+    margin: 1rem 0;
+  }
+  
+  .column-pill {
+    display: inline-block;
+    padding: 0.6rem 1rem;
+    border-radius: 1.5rem;
+    background: rgb(48, 49, 52);
+    font-size: 0.9rem;
+    border: 1px solid #3d3d3d;
+    color: #e0e0e0;
+  }

@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { processExcelFiles, downloadFile } from '../backend/main';
 import JSZip from 'jszip';
 
-interface GeneratedFile {
+export interface GeneratedFile {
   id: string;
   name: string;
   blob: Blob;
