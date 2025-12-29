@@ -1,8 +1,7 @@
 // src/backend/people_selector.js
 
-import * as XLSX from "xlsx";
 import { combineExcelFiles } from "./main";
-import { processPersonData } from "./form_automator";
+import { processPersonData, getDicts } from "./form_automator";
 
 /**
  * Merge the uploaded Excel File[] array, parse all rows starting
@@ -14,42 +13,76 @@ import { processPersonData } from "./form_automator";
  * @returns {Promise<Object|null>}  the same shape that processPersonData returns
  */
 export async function loadPersonData(fullName, excelFiles) {
-  if (!fullName || !excelFiles?.length) {
-    return null;
-  }
+    if (!fullName || !excelFiles?.length) {
+        return null;
+    }
 
-  // 1) combine all Excel files into one workbook File
-  const combinedFile = await combineExcelFiles(excelFiles);
+    console.log(
+        `people_selector.loadPersonData: looking up '${fullName}' in ${excelFiles.length} excel file(s)`
+    );
 
-  // 2) read its bytes, load into XLSX
-  const buffer = await combinedFile.arrayBuffer();
-  const wb = XLSX.read(buffer, { type: "array" });
-  const sheet = wb.Sheets[wb.SheetNames[0]];
+    // 1) combine all Excel files into one workbook File
+    const combinedFile = await combineExcelFiles(excelFiles);
 
-  // 3) convert to JSON, starting at row 6 (zero‐based range:5)
-  const rows = XLSX.utils.sheet_to_json(sheet, { range: 5 });
+    // 2) use getDicts to parse the combined file with auto-detected header row
+    const rows = await getDicts(combinedFile);
 
-  // 4) build a lowercase target to match
-  const target = fullName.toLowerCase().trim();
+    console.log(
+        `people_selector.loadPersonData: parsed ${rows.length} rows from combined sheet; sample:`,
+        rows && rows.length ? rows[0] : null
+    );
 
-  // 5) find the matching row by concatenating first/middle/last
-  const row = rows.find((r) => {
-    const parts = [
-      r["Beneficiary First Name"] || "",
-      r["Beneficiary Middle Name"] || "",
-      r["Beneficiary Last Name"] || "",
-    ]
-      .filter(Boolean)
-      .join(" ")
-      .toLowerCase()
-      .trim();
-    return parts === target;
-  });
+    // 4) build a lowercase target to match
+    const target = fullName.toLowerCase().trim();
 
-  if (!row) {
-    return null;
-  }
+    // 5) find the matching row by concatenating first/middle/last
+    const row = rows.find((r) => {
+        // Prefer separate columns, but fall back to a single `Beneficiary Name` column
+        let parts = [
+            r["Beneficiary First Name"] || "",
+            r["Beneficiary Middle Name"] || "",
+            r["Beneficiary Last Name"] || "",
+        ]
+            .filter(Boolean)
+            .join(" ");
+        if (!parts) {
+            parts = r["Beneficiary Name"] || r["Beneficiary"] || "";
+        }
+        // Normalize whitespace and compare
+        const normalized = parts.toLowerCase().replace(/\s+/g, " ").trim();
+        // console log each candidate normalized (but avoid spamming too much)
+        // Only log the candidate when it matches target or when small set
+        if (normalized === target) {
+            console.log(
+                `people_selector.loadPersonData: matched row normalized='${normalized}' target='${target}'`,
+                r
+            );
+        }
+        return normalized === target;
+    });
 
-  // 6) map that row into the camelCase person object
-  return processPersonData(row, /* index */ 0);
+    if (!row) {
+        console.log(
+            `people_selector.loadPersonData: no matching row found for '${fullName}' (target='${target}').`,
+            // show first 6 normalized candidates for inspection
+            rows.slice(0, 6).map((r) => {
+                let parts = [
+                    r["Beneficiary First Name"] || "",
+                    r["Beneficiary Middle Name"] || "",
+                    r["Beneficiary Last Name"] || "",
+                ]
+                    .filter(Boolean)
+                    .join(" ");
+                if (!parts)
+                    parts = r["Beneficiary Name"] || r["Beneficiary"] || "";
+                return (parts || "").toLowerCase().replace(/\s+/g, " ").trim();
+            })
+        );
+        return null;
+    }
+
+    // 6) map that row into the camelCase person object
+    const person = processPersonData(row, /* index */ 0);
+    console.log("people_selector.loadPersonData: processed person:", person);
+    return person;
 }

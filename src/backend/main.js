@@ -15,6 +15,12 @@ export async function combineExcelFiles(fileList) {
         const wb = XLSX.read(buffer, { type: "array" });
         const sheet = wb.Sheets[wb.SheetNames[0]];
         const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+        // Debug: log file name and number of rows read from each uploaded file
+        try {
+            // debug logging removed
+        } catch (e) {
+            console.warn("combineExcelFiles: failed to log file info", e);
+        }
         allRows.push(...rows);
     }
 
@@ -45,15 +51,11 @@ export async function processExcelFiles(
     plaintiffData,
     defendantData,
     attorneyData
-  ) {
+) {
     // Step 1: Combine inputs
     const combinedFile = await combineExcelFiles(files);
 
-    console.log('processExcelFiles()', {
-      plaintiffData,
-      defendantData,
-      attorneyData,
-    });
+    // processExcelFiles called
 
     // Step 2: Delegate to formAutomator.js logic
     // processFormsForBoth should return an array of { name: string, blob: Blob }
@@ -61,13 +63,13 @@ export async function processExcelFiles(
         plaintiffData,
         defendantData,
         attorneyData,
-      });
+    });
 
     // Step 3: Prefix filenames with plaintiff directory
-    return outputs.map(f => ({
+    return outputs.map((f) => ({
         name: f.name,
         blob: f.blob,
-      }));
+    }));
 }
 
 /**

@@ -5,7 +5,7 @@
     margin: 3rem auto;
     flex: 1;
     padding-bottom: 3rem;
-  }
+}
 
 .generated-files-list {
     display: flex;
@@ -18,7 +18,7 @@
     align-items: center;
     justify-content: space-between;
     padding: 0.75rem;
-    background-color: rgb(48,49,52);   /* adjust as needed */
+    background-color: rgb(48, 49, 52); /* adjust as needed */
     border-radius: 10px;
     /* border: 1px solid #e9ecef; */
 }
@@ -81,15 +81,15 @@
     align-items: center;
     justify-content: space-between;
     margin-bottom: 1rem;
-  }
-  
-  .generated-files-title {
+}
+
+.generated-files-title {
     margin: 0;
-    color: white;        /* adjust per your theme */
+    color: white; /* adjust per your theme */
     font-size: 1.5rem;
-  }
-  
-  .generated-download-all-button {
+}
+
+.generated-download-all-button {
     background-color: #c5fba3;
     color: black;
     border: none;
@@ -98,13 +98,13 @@
     font-size: 0.9rem;
     cursor: pointer;
     transition: background-color 0.2s;
-  }
-  
-  .generated-download-all-button:hover {
+}
+
+.generated-download-all-button:hover {
     background-color: #239e91;
-  }
-  
-  /* ...your existing .generated-files-list, .generated-file-item, etc. */
+}
+
+/* ...your existing .generated-files-list, .generated-file-item, etc. */
 
 /* You can drop or rename the following if you’re not using them: */
 /*
