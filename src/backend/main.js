@@ -52,8 +52,11 @@ export async function processExcelFiles(
     defendantData,
     attorneyData
 ) {
-    // Step 1: Combine inputs
-    const combinedFile = await combineExcelFiles(files);
+    // Step 1: Combine inputs (skip if no files uploaded)
+    let combinedFile = null;
+    if (files && files.length) {
+        combinedFile = await combineExcelFiles(files);
+    }
 
     // processExcelFiles called
 

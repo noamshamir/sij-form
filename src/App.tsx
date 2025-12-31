@@ -143,10 +143,9 @@ const UploadPage: React.FC<UploadPageProps> = ({
                 />
             </div>
             <div className='generate-button-container'>
-                <NextButton
-                    to='/people'
-                    disabled={uploadedFiles.length === 0}
-                />
+                <NextButton to='/people' disabled={false}>
+                    {uploadedFiles.length === 0 ? "Skip" : "Next"}
+                </NextButton>
             </div>
         </div>
     </div>
@@ -287,10 +286,6 @@ const App: React.FC = () => {
     const navigate = useNavigate();
     const handleGenerate = useCallback(async () => {
         // allow missing people — pass along whatever data exists (may be empty)
-        if (!uploadedFiles.length) {
-            setError("Please upload at least one file");
-            return;
-        }
         // Ensure each person data object has all expected fields and no 'undefined' values
         const personKeys = [
             "first_name",
@@ -371,25 +366,22 @@ const App: React.FC = () => {
                 <Route
                     path='/people'
                     element={
-                        uploadedFiles.length === 0 ? (
-                            <Navigate to='/' />
-                        ) : (
-                            <PeoplePage
-                                uploadedFiles={uploadedFiles}
-                                selectedPeople={selectedPeople}
-                                handlePersonSelect={handlePersonSelect}
-                                handlePersonDataChange={handlePersonDataChange}
-                                onGenerate={handleGenerate}
-                                isProcessing={isProcessing}
-                                isFormComplete={isFormComplete}
-                            />
-                        )
+                        <PeoplePage
+                            uploadedFiles={uploadedFiles}
+                            selectedPeople={selectedPeople}
+                            handlePersonSelect={handlePersonSelect}
+                            handlePersonDataChange={handlePersonDataChange}
+                            onGenerate={handleGenerate}
+                            isProcessing={isProcessing}
+                            isFormComplete={isFormComplete}
+                        />
                     }
                 />
                 <Route
                     path='/download'
                     element={
-                        !uploadedFiles.length ? (
+                        // Only allow viewing the download page when files have been generated
+                        generatedFiles.length === 0 ? (
                             <Navigate to='/' />
                         ) : (
                             <DownloadPage
