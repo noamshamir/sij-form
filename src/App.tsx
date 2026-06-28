@@ -57,6 +57,10 @@ const FormPage: React.FC<FormPageProps> = ({
                 Only known details are filled — narrative answers are left
                 blank for you to complete.
             </p>
+            <p className='form-only-tip'>
+                Testing tip: type <kbd>test</kbd> anywhere (outside a field) to
+                auto-fill the form with random sample data.
+            </p>
         </header>
 
         <FormFiller onDataChange={onDataChange} />

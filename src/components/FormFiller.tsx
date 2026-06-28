@@ -1,7 +1,11 @@
 // src/components/FormFiller.tsx
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import "./PeopleSelector.css";
 import "./FormFiller.css";
+
+// Typing this word anywhere on the page (outside a field) auto-fills the
+// form with random sample data — handy for quick testing.
+const TRIGGER_WORD = "test";
 
 export type PersonType = "plaintiff" | "defendant" | "attorney";
 
@@ -50,6 +54,82 @@ const formFields = [
 
 const blank = () => Object.fromEntries(formFields.map((f) => [f.key, ""]));
 
+// --- Random test-data generation -----------------------------------------
+const FIRST_NAMES = ["Maria", "Juan", "Sofia", "Carlos", "Ana", "Luis", "Camila", "Diego", "Valeria", "Mateo", "Gabriela", "Andres"];
+const MIDDLE_NAMES = ["", "", "Jose", "Marie", "Alejandro", "Isabel", "Antonio", "Elena"];
+const LAST_NAMES = ["Garcia", "Rodriguez", "Martinez", "Hernandez", "Lopez", "Gonzalez", "Perez", "Sanchez", "Ramirez", "Torres", "Flores", "Rivera"];
+const ATTORNEY_FIRST = ["Sarah", "Michael", "Jennifer", "David", "Emily", "Robert", "Laura", "James"];
+const ATTORNEY_LAST = ["Goldberg", "Chen", "Murphy", "Patel", "Nguyen", "Cohen", "Brennan", "Kim"];
+const STREETS = ["Main St", "Oak Ave", "Elm St", "Washington Blvd", "Maple Dr", "Beacon St", "Tremont St", "Highland Ave", "Summer St", "Cross St"];
+const CITIES = ["Boston", "Chelsea", "Lynn", "Lawrence", "Worcester", "Springfield", "Cambridge", "Somerville", "Revere", "Everett", "Malden", "Brockton"];
+const COUNTIES = ["Suffolk", "Essex", "Middlesex", "Worcester", "Hampden", "Norfolk"];
+const NATIONALITIES = ["Guatemala", "Honduras", "El Salvador", "Mexico", "Brazil", "Haiti", "Ecuador", "Colombia"];
+
+const ri = (a: number, b: number) => Math.floor(Math.random() * (b - a + 1)) + a;
+const pick = <T,>(arr: T[]): T => arr[ri(0, arr.length - 1)];
+const pad = (n: number, l: number) => String(n).padStart(l, "0");
+// type="date" inputs need yyyy-mm-dd to display a value.
+const isoDate = (year: number) => `${year}-${pad(ri(1, 12), 2)}-${pad(ri(1, 28), 2)}`;
+const phone = () => `617-${ri(200, 989)}-${pad(ri(0, 9999), 4)}`;
+const zip = () => `0${ri(1000, 2999)}`;
+
+function randomCase() {
+    const thisYear = new Date().getFullYear();
+    const familyName = pick(LAST_NAMES); // child + parent share a surname
+    const county = pick(COUNTIES);
+    const nationality = pick(NATIONALITIES);
+    const birthYear = ri(thisYear - 20, thisYear - 3);
+
+    const base = () => ({ ...blank(), state: "MA" });
+
+    const plaintiff = {
+        ...base(),
+        first_name: pick(FIRST_NAMES),
+        middle_name: pick(MIDDLE_NAMES),
+        last_name: familyName,
+        address: `${ri(1, 999)} ${pick(STREETS)}`,
+        apartment_number: Math.random() < 0.5 ? `Apt ${ri(1, 40)}` : "",
+        city: pick(CITIES),
+        zip_code: zip(),
+        county,
+        age: thisYear - birthYear,
+        birth_date: isoDate(birthYear),
+        process_type: "SIJ",
+        date_opened: isoDate(ri(thisYear - 2, thisYear)),
+        nationality,
+        case_no: `${ri(20, 25)}P${ri(1000, 9999)}EA`,
+        i765_receipt_date: isoDate(ri(thisYear - 2, thisYear)),
+        phone_cell: phone(),
+    };
+
+    const defendant = {
+        ...base(),
+        first_name: pick(FIRST_NAMES),
+        middle_name: pick(MIDDLE_NAMES),
+        last_name: familyName,
+        address: `${ri(1, 999)} ${pick(STREETS)}`,
+        apartment_number: Math.random() < 0.5 ? `Unit ${ri(1, 20)}` : "",
+        city: pick(CITIES),
+        zip_code: zip(),
+        county,
+        nationality,
+    };
+
+    const attorney = {
+        ...base(),
+        first_name: pick(ATTORNEY_FIRST),
+        middle_name: pick(MIDDLE_NAMES),
+        last_name: pick(ATTORNEY_LAST),
+        address: `${ri(1, 999)} ${pick(STREETS)}`,
+        apartment_number: `Suite ${ri(100, 900)}`,
+        city: pick(CITIES),
+        zip_code: zip(),
+        phone_cell: phone(),
+    };
+
+    return { plaintiff, defendant, attorney };
+}
+
 export const FormFiller: React.FC<FormFillerProps> = ({ onDataChange }) => {
     const [activeTab, setActiveTab] = useState<PersonType>("plaintiff");
     const [plaintiffData, setPlaintiffData] = useState<Record<string, any>>(
@@ -61,6 +141,7 @@ export const FormFiller: React.FC<FormFillerProps> = ({ onDataChange }) => {
     const [attorneyData, setAttorneyData] = useState<Record<string, any>>(
         blank()
     );
+    const [toast, setToast] = useState("");
 
     const dataFor = (tab: PersonType) =>
         tab === "plaintiff"
@@ -100,10 +181,56 @@ export const FormFiller: React.FC<FormFillerProps> = ({ onDataChange }) => {
         [activeTab, plaintiffData, defendantData, attorneyData, onDataChange]
     );
 
+    // Fill all three tabs with random sample data.
+    const fillRandom = useCallback(() => {
+        const { plaintiff, defendant, attorney } = randomCase();
+        setPlaintiffData(plaintiff);
+        setDefendantData(defendant);
+        setAttorneyData(attorney);
+        onDataChange("plaintiff", plaintiff);
+        onDataChange("defendant", defendant);
+        onDataChange("attorney", attorney);
+        setToast("Filled with random test data");
+    }, [onDataChange]);
+
+    // Listen for the trigger word typed anywhere except inside a field.
+    useEffect(() => {
+        let buffer = "";
+        const onKey = (e: KeyboardEvent) => {
+            const el = e.target as HTMLElement | null;
+            const tag = el?.tagName?.toLowerCase();
+            if (
+                tag === "input" ||
+                tag === "textarea" ||
+                tag === "select" ||
+                el?.isContentEditable
+            ) {
+                return;
+            }
+            if (e.key && e.key.length === 1) {
+                buffer = (buffer + e.key.toLowerCase()).slice(-TRIGGER_WORD.length);
+                if (buffer === TRIGGER_WORD) {
+                    buffer = "";
+                    fillRandom();
+                }
+            }
+        };
+        window.addEventListener("keydown", onKey);
+        return () => window.removeEventListener("keydown", onKey);
+    }, [fillRandom]);
+
+    // Auto-dismiss the toast.
+    useEffect(() => {
+        if (!toast) return;
+        const id = window.setTimeout(() => setToast(""), 2500);
+        return () => window.clearTimeout(id);
+    }, [toast]);
+
     const data = dataFor(activeTab);
 
     return (
         <div className='people-selector form-filler'>
+            {toast && <div className='form-only-toast'>{toast}</div>}
             {/* Tabs */}
             <div className='tabs'>
                 {TAB_TYPES.map((tab) => (

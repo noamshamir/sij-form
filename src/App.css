@@ -193,6 +193,20 @@ h2 {
   margin: 0 auto;
   max-width: 640px;
 }
+.form-only-tip {
+  color: #6b7177;
+  font-size: 0.85rem;
+  margin: 0.75rem auto 0;
+}
+.form-only-tip kbd {
+  background: #303134;
+  border: 1px solid #4a4f55;
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-family: monospace;
+  font-size: 0.85em;
+  color: #c5fba3;
+}
 .form-only-actions {
   display: flex;
   flex-direction: column;
