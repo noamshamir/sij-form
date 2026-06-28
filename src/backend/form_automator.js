@@ -1,6 +1,6 @@
 import * as XLSX from "xlsx";
 import { combineExcelFiles } from "./main";
-import { PDFDocument } from "pdf-lib";
+import { PDFDocument, StandardFonts } from "pdf-lib";
 
 // Template URLs. Resolve against PUBLIC_URL so the fetch works regardless of
 // whether the app is served from the site root or a sub-path (e.g. /form-only).
@@ -11,6 +11,47 @@ const TEMPLATE_URLS = {
     jud_pfc_cjp35: `${BASE}/updated_templates/cjp35-complaint-for-dependency-c119-s39m.pdf`,
     jud_pfc_cjp37: `${BASE}/updated_templates/cjp37-judgment-and-findings on dependency affirmative.pdf`,
     notice_of_appearance: `${BASE}/templates/Notice of Appearance Form - 2023.pdf`,
+};
+
+// The current CJ-D 109 (5/10/17) revision ships as a FLATTENED PDF (no AcroForm
+// fields), so it can't be filled by field name like the others. These rectangles
+// were transplanted from the prior fillable CJ-D 109 (7/15/15), whose layout is
+// identical; we recreate the text fields at these positions, then fill them.
+// Coordinates are PDF points (bottom-left origin) on the single 612x792 page.
+const CJD109_FIELD_RECTS = {
+    "form1[0].BodyPage1[0].Subform6[0].TextField4[4]": { x: 29.8, y: 705.8, w: 120.3, h: 11.3 },
+    "form1[0].BodyPage1[0].Subform6[0].TextField4[5]": { x: 182.8, y: 706, w: 120.3, h: 11.1 },
+    "form1[0].BodyPage1[0].Subform6[0].TextField4[1]": { x: 29.8, y: 660.8, w: 120.3, h: 11.3 },
+    "form1[0].BodyPage1[0].Subform6[0].TextField4[2]": { x: 182.8, y: 661, w: 120.3, h: 11.1 },
+    "form1[0].BodyPage1[0].Subform6[0].TextField4[3]": { x: 155.8, y: 661.1, w: 21.3, h: 11.1 },
+    "form1[0].BodyPage1[0].Subform6[0].TextField4[6]": { x: 155.8, y: 706.1, w: 21.3, h: 11.1 },
+    "form1[0].BodyPage1[0].S1[0].t1[0]": { x: 146.8, y: 624.1, w: 129.3, h: 12.1 },
+    "form1[0].BodyPage1[0].S1[0].TextField4[1]": { x: 281.8, y: 624.1, w: 75.3, h: 12.1 },
+    "form1[0].BodyPage1[0].S1[0].t2[0]": { x: 362.8, y: 624.1, w: 102.3, h: 12.1 },
+    "form1[0].BodyPage1[0].S1[0].TextField4[0]": { x: 470.8, y: 624.1, w: 39.3, h: 12.1 },
+    "form1[0].BodyPage1[0].S1[0].TextField5[0]": { x: 515.8, y: 624.1, w: 57.3, h: 12.1 },
+    "form1[0].BodyPage1[0].S2[0].TextField4[2]": { x: 38.9, y: 479.6, w: 155.1, h: 12.5 },
+    "form1[0].BodyPage1[0].S2[0].TextField4[1]": { x: 199.7, y: 479.6, w: 60.6, h: 12.5 },
+    "form1[0].BodyPage1[0].S2[0].TextField4[0]": { x: 265.9, y: 479.6, w: 126.8, h: 12.5 },
+    "form1[0].BodyPage1[0].S2[0].TextField5[1]": { x: 398.3, y: 479.6, w: 79.5, h: 12.5 },
+    "form1[0].BodyPage1[0].S2[0].TextField5[2]": { x: 483.5, y: 479.6, w: 98.4, h: 12.5 },
+    "form1[0].BodyPage1[0].S2[0].TextField4[6]": { x: 38.9, y: 451.8, w: 183.5, h: 13.3 },
+    "form1[0].BodyPage1[0].S2[0].TextField4[5]": { x: 228.1, y: 451.8, w: 79.5, h: 13.3 },
+    "form1[0].BodyPage1[0].S2[0].TextField4[4]": { x: 313.2, y: 452.4, w: 117.3, h: 12.8 },
+    "form1[0].BodyPage1[0].S2[0].TextField4[3]": { x: 436.2, y: 451.8, w: 60.6, h: 13.3 },
+    "form1[0].BodyPage1[0].S2[0].TextField5[0]": { x: 502.4, y: 451.8, w: 79.5, h: 13.3 },
+    "form1[0].BodyPage1[0].S3[0].t1[0]": { x: 155.9, y: 425.5, w: 135.2, h: 12.7 },
+    "form1[0].BodyPage1[0].S3[0].TextField4[0]": { x: 296.7, y: 425.5, w: 78.9, h: 12.7 },
+    "form1[0].BodyPage1[0].S3[0].t2[0]": { x: 381.3, y: 425.5, w: 107, h: 12.7 },
+    "form1[0].BodyPage1[0].S3[0].TextField4[1]": { x: 494, y: 425.5, w: 31.9, h: 12.7 },
+    "form1[0].BodyPage1[0].S3[0].TextField5[0]": { x: 531.6, y: 425.5, w: 60.1, h: 12.7 },
+    "form1[0].BodyPage1[0].S8[0].TextField5[0]": { x: 281.8, y: 127.7, w: 309.3, h: 17.5 },
+    "form1[0].BodyPage1[0].S8[0].TextField5[4]": { x: 281.9, y: 96.9, w: 210.3, h: 12.4 },
+    "form1[0].BodyPage1[0].S8[0].TextField4[0]": { x: 497.8, y: 96.5, w: 93.3, h: 12.8 },
+    "form1[0].BodyPage1[0].S8[0].TextField5[3]": { x: 281.8, y: 65.2, w: 192.3, h: 13.3 },
+    "form1[0].BodyPage1[0].S8[0].TextField5[2]": { x: 479.8, y: 65.2, w: 39.3, h: 13.3 },
+    "form1[0].BodyPage1[0].S8[0].TextField5[1]": { x: 524.8, y: 65.2, w: 66.3, h: 13.3 },
+    "form1[0].BodyPage1[0].S8[0].Phone[0]": { x: 376.2, y: 38.5, w: 214.5, h: 12.5 },
 };
 
 /**
@@ -461,19 +502,48 @@ export function getFormFields(plaintiff, defendant, attorney) {
 /**
  * Fill a template PDF for a set of fields, return a Blob.
  */
-async function fillPdf(templateUrl, fields) {
+async function fillPdf(templateUrl, fields, fieldRects) {
     const res = await fetch(templateUrl);
     const arrayBuffer = await res.arrayBuffer();
     const pdfDoc = await PDFDocument.load(arrayBuffer);
     const form = pdfDoc.getForm();
-    Object.entries(fields).forEach(([key, value]) => {
-        try {
-            const field = form.getTextField(key);
-            field.setText(String(value));
-        } catch (e) {
-            console.warn(`Field ${key} not found:`, e);
+
+    if (fieldRects) {
+        // Flattened template (no AcroForm fields): recreate the needed text
+        // fields at known rectangles, then fill them.
+        const helv = await pdfDoc.embedFont(StandardFonts.Helvetica);
+        const page = pdfDoc.getPages()[0];
+        for (const [key, value] of Object.entries(fields)) {
+            const r = fieldRects[key];
+            if (!r || String(value ?? "") === "") continue;
+            try {
+                const tf = form.createTextField(key);
+                tf.addToPage(page, {
+                    x: r.x,
+                    y: r.y,
+                    width: r.w,
+                    height: r.h,
+                    borderWidth: 0,
+                    font: helv,
+                });
+                tf.setFontSize(Math.max(7, Math.min(10, r.h * 0.62)));
+                tf.setText(String(value));
+            } catch (e) {
+                console.warn(`Could not place field ${key}:`, e);
+            }
         }
-    });
+        form.updateFieldAppearances(helv);
+    } else {
+        Object.entries(fields).forEach(([key, value]) => {
+            try {
+                const field = form.getTextField(key);
+                field.setText(String(value));
+            } catch (e) {
+                console.warn(`Field ${key} not found:`, e);
+            }
+        });
+    }
+
     const pdfBytes = await pdfDoc.save();
     return new Blob([pdfBytes], { type: "application/pdf" });
 }
@@ -522,7 +592,8 @@ export async function processFormsForBoth(
     // Fill each template and collect outputs
     const output = [];
     for (const [key, url] of Object.entries(TEMPLATE_URLS)) {
-        const blob = await fillPdf(url, formFieldsMap[key]);
+        const rects = key === "cjd109" ? CJD109_FIELD_RECTS : undefined;
+        const blob = await fillPdf(url, formFieldsMap[key], rects);
         // now filename uses a real full_name
         const filename = `${key}.${plaintiffs.full_name}.pdf`;
         output.push({ name: filename, blob });
