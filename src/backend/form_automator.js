@@ -11,6 +11,12 @@ const TEMPLATE_URLS = {
     jud_pfc_cjp35: `${BASE}/updated_templates/cjp35-complaint-for-dependency-c119-s39m.pdf`,
     jud_pfc_cjp37: `${BASE}/updated_templates/cjp37-judgment-and-findings on dependency affirmative.pdf`,
     notice_of_appearance: `${BASE}/templates/Notice of Appearance Form - 2023.pdf`,
+    cjd400: `${BASE}/updated_templates/Motion (CJ-D 400).pdf`,
+    // CJP 31's official copy is a dynamic XFA form that renders "Please wait" in
+    // non-Adobe viewers; the flattened templates/ copy renders (it has no fillable
+    // fields, so it is produced blank for the user to complete by hand).
+    cjp31: `${BASE}/templates/Motion for Service by Alternate Means & Affidavit (CJP 31)_07-16-2024_1038.pdf`,
+    tc0050: `${BASE}/updated_templates/Child Care or Custody Disclosure Affidavit (TC0050).pdf`,
 };
 
 /**
@@ -454,6 +460,52 @@ export function getFormFields(plaintiff, defendant, attorney) {
             "form1[0].BodyPage1[0].PartyInformationSub[0].FirmField[0]": "",
             "form1[0].BodyPage1[0].PartyInformationSub[0].PhoneField[0]": "",
             "form1[0].BodyPage1[0].PartyInformationSub[0].EmailField[0]": "",
+        },
+        cjd400: {
+            // Caption + the moving attorney's signature block. The motion's
+            // relief/grounds body and all selection fields are left blank.
+            "form1[0].BodyPage1[0].Docket[0]": plaintiff["case_no"],
+            "form1[0].BodyPage1[0].Plaintiff[0]": plaintiff["full_name"],
+            "form1[0].BodyPage1[0].Defendant[0]": defendant["full_name"],
+            "form1[0].BodyPage1[0].Print[0]": attorney["full_name"],
+            "form1[0].BodyPage1[0].Add[0]": [
+                attorney.address,
+                attorney.apartment_number,
+            ]
+                .filter(Boolean)
+                .join(", "),
+            "form1[0].BodyPage1[0].CityTown[0]": attorney["city"],
+            "form1[0].BodyPage1[0].State[0]": attorney["state"],
+            "form1[0].BodyPage1[0].Zip[0]": attorney["zip_code"],
+            "form1[0].BodyPage1[0].TelNo[0]": attorney["phone_cell"],
+        },
+        // CJP 31 is a flat, non-fillable form (dynamic XFA) — produced blank.
+        cjp31: {},
+        tc0050: {
+            // Caption + child A + the party-contact/attorney block. The lists of
+            // other proceedings / persons and all selections are left blank.
+            "form1[0].BodyPage1[0].sb_CourtDeptSite[0].CaseName[0]": `${plaintiff.full_name} v. ${defendant.full_name}`,
+            "form1[0].BodyPage1[0].sb_CourtDeptSite[0].sb_Dept[0].DocketNo[0]":
+                plaintiff["case_no"],
+            "form1[0].BodyPage1[0].sb_partychkbox[0].txt_forPartyName[0]":
+                plaintiff["full_name"],
+            "form1[0].BodyPage1[0].sb_childList[0].txt_ChildA_name[0]":
+                plaintiff["full_name"],
+            "form1[0].BodyPage3[0].Subform2[0].txt_printTypeName[0]":
+                plaintiff["full_name"],
+            "form1[0].BodyPage3[0].Subform2[0].txt_homeaddr[0]": [
+                [plaintiff.address, plaintiff.apartment_number]
+                    .filter(Boolean)
+                    .join(" "),
+                plaintiff.city,
+                [plaintiff.state, plaintiff.zip_code].filter(Boolean).join(" "),
+            ]
+                .filter(Boolean)
+                .join(", "),
+            "form1[0].BodyPage3[0].Subform2[0].txt_PhoneNo[0]":
+                plaintiff["phone_cell"],
+            "form1[0].BodyPage3[0].Subform2[0].txt_AttrName[0]":
+                attorney["full_name"],
         },
     };
 }
