@@ -2,17 +2,15 @@ import * as XLSX from "xlsx";
 import { combineExcelFiles } from "./main";
 import { PDFDocument } from "pdf-lib";
 
-// Template URLs (host these PDF templates in your public folder):
+// Template URLs. Resolve against PUBLIC_URL so the fetch works regardless of
+// whether the app is served from the site root or a sub-path (e.g. /form-only).
+const BASE = process.env.PUBLIC_URL || "";
 const TEMPLATE_URLS = {
-    // cjd109: "../../templates/cjd109.pdf",
-    cjd109: "../../updated_templates/cjd109.pdf",
-    jud_affidavit: "../../templates/jud-affidavit-of-indigency-821.pdf",
-    jud_pfc_cjp35:
-        "../../updated_templates/cjp35-complaint-for-dependency-c119-s39m.pdf",
-    jud_pfc_cjp37:
-        "../../updated_templates/cjp37-judgment-and-findings on dependency affirmative.pdf",
-    notice_of_appearance:
-        "../../templates/Notice of Appearance Form - 2023.pdf",
+    cjd109: `${BASE}/updated_templates/cjd109.pdf`,
+    jud_affidavit: `${BASE}/templates/jud-affidavit-of-indigency-821.pdf`,
+    jud_pfc_cjp35: `${BASE}/updated_templates/cjp35-complaint-for-dependency-c119-s39m.pdf`,
+    jud_pfc_cjp37: `${BASE}/updated_templates/cjp37-judgment-and-findings on dependency affirmative.pdf`,
+    notice_of_appearance: `${BASE}/templates/Notice of Appearance Form - 2023.pdf`,
 };
 
 /**
@@ -231,8 +229,10 @@ export function getFormFields(plaintiff, defendant, attorney) {
                 defendant["last_name"],
             "form1[0].BodyPage1[0].Subform6[0].TextField4[3]":
                 defendant["middle_initial"],
+            // TextField4[6] is the Plaintiff-row middle initial (verified by
+            // positional probe), not a second defendant initial.
             "form1[0].BodyPage1[0].Subform6[0].TextField4[6]":
-                defendant["middle_initial"],
+                plaintiff["middle_initial"],
 
             "form1[0].BodyPage1[0].S1[0].t1[0]": plaintiff["address"],
             "form1[0].BodyPage1[0].S1[0].TextField4[1]":
@@ -270,16 +270,19 @@ export function getFormFields(plaintiff, defendant, attorney) {
             "form1[0].BodyPage1[0].S8[0].TextField5[3]": attorney["city"],
             "form1[0].BodyPage1[0].S8[0].TextField5[2]": attorney["state"],
             "form1[0].BodyPage1[0].S8[0].TextField5[1]": attorney["zip_code"],
+            "form1[0].BodyPage1[0].S8[0].Phone[0]": attorney["phone_cell"],
         },
         jud_affidavit: {
+            // Affidavit of Indigency is completed by the applicant (the child).
+            // This form has no attorney section, so only applicant fields apply.
             "Name of applicant": plaintiff.full_name,
             "Street and number": plaintiff.address,
             "City or town": plaintiff.city,
             "State and Zip": plaintiff.state_and_zip,
-            "Attorney Name": attorney.full_name,
-            "Attorney Address": attorney.address,
-            "Attorney City": attorney.city,
-            "Attorney State and Zip": attorney.state_and_zip,
+            // Clear the template's placeholder-hint text on fields we cannot
+            // derive, so the produced form is blank rather than printing hints.
+            Court: "",
+            "Case Name and Number if known": "",
         },
         jud_pfc_cjp35: {
             // Docket No. repeats
@@ -414,12 +417,43 @@ export function getFormFields(plaintiff, defendant, attorney) {
             // - or "If applicable" custodian/care fields not in your provided data.
         },
         notice_of_appearance: {
+            // Case caption: child v. parent
             "form1[0].BodyPage1[0].CaseNameSub[0].PlffField[0]":
                 plaintiff.full_name,
-            "form1[0].BodyPage1[0].CaseNameSub[0].DfdtField[0]": `${defendant.first_name} ${defendant.last_name}`,
-            "form1[0].BodyPage1[0].AttyField[0]": attorney.full_name,
-            "form1[0].BodyPage1[0].AttyAddrField[0]": attorney.address,
-            "form1[0].BodyPage1[0].AttyCityField[0]": `${attorney.city}, ${attorney.state} ${attorney.zip_code}`,
+            "form1[0].BodyPage1[0].CaseNameSub[0].DfdtField[0]": [
+                defendant.first_name,
+                defendant.last_name,
+            ]
+                .filter(Boolean)
+                .join(" "),
+
+            // Party information block (the appearing attorney). The real field
+            // names live under PartyInformationSub — the previous AttyField /
+            // AttyAddrField / AttyCityField names do not exist in this template.
+            "form1[0].BodyPage1[0].PartyInformationSub[0].NameField[0]":
+                attorney.full_name,
+            "form1[0].BodyPage1[0].PartyInformationSub[0].AddressField[0]":
+                attorney.address,
+            "form1[0].BodyPage1[0].PartyInformationSub[0].AptField[0]":
+                attorney.apartment_number,
+            "form1[0].BodyPage1[0].PartyInformationSub[0].CityField[0]":
+                attorney.city,
+            "form1[0].BodyPage1[0].PartyInformationSub[0].StateField[0]":
+                attorney.state,
+            "form1[0].BodyPage1[0].PartyInformationSub[0].ZipcodeField[0]":
+                attorney.zip_code,
+            // Phone-Cell is a mobile number → goes in the "Mobile" field.
+            "form1[0].BodyPage1[0].PartyInformationSub[0].CellField[0]":
+                attorney.phone_cell,
+            // Clear the template's placeholder-hint text on fields we cannot
+            // derive (BBO #, firm, office phone, e-mail, court division), so the
+            // produced form is blank there rather than printing the hints.
+            "form1[0].BodyPage1[0].CourtDeptSiteSub[0].DeptSubform[0].DivisionDrop[0]":
+                "",
+            "form1[0].BodyPage1[0].PartyInformationSub[0].BBOField[0]": "",
+            "form1[0].BodyPage1[0].PartyInformationSub[0].FirmField[0]": "",
+            "form1[0].BodyPage1[0].PartyInformationSub[0].PhoneField[0]": "",
+            "form1[0].BodyPage1[0].PartyInformationSub[0].EmailField[0]": "",
         },
     };
 }

@@ -1,0 +1,46 @@
+/* Form-only layout. Reuses the dark visual language from PeopleSelector.css
+   but drops the Excel-search column so the form takes center stage. */
+
+.form-filler .form-only-body {
+    width: 75vw;
+    max-width: 1100px;
+    margin: 1.5rem auto 0;
+    display: flex;
+    justify-content: center;
+}
+
+/* Override the split-view form-container: no left divider, full width here. */
+.form-filler .form-only-body .form-container {
+    width: 100%;
+    border-left: none;
+    padding-left: 0;
+}
+
+.form-filler .form-only-blurb {
+    color: #90969c;
+    margin: 0 0 1.25rem;
+    font-size: 0.95rem;
+}
+
+/* Two-column grid of fields so all 17 fit without endless scrolling. */
+.form-filler .form-only-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 2.5rem;
+    row-gap: 0;
+}
+
+.form-filler .form-only-grid label {
+    color: #ffffff;
+    display: flex;
+    flex-direction: column;
+}
+
+@media (max-width: 720px) {
+    .form-filler .form-only-grid {
+        grid-template-columns: 1fr;
+    }
+    .form-filler .form-only-body {
+        width: 92vw;
+    }
+}
