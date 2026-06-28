@@ -1,0 +1,13 @@
+{
+  "files": {
+    "main.css": "/form-only/static/css/main.56ec674a.css",
+    "main.js": "/form-only/static/js/main.e0834404.js",
+    "index.html": "/form-only/index.html",
+    "main.56ec674a.css.map": "/form-only/static/css/main.56ec674a.css.map",
+    "main.e0834404.js.map": "/form-only/static/js/main.e0834404.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.56ec674a.css",
+    "static/js/main.e0834404.js"
+  ]
+}
