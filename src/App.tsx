@@ -50,17 +50,23 @@ const FormPage: React.FC<FormPageProps> = ({
     canGenerate,
 }) => (
     <div className='form-only-page'>
-        <header className='form-only-header'>
-            <h1>SIJ Form Filler</h1>
-            <p>
-                Enter the case details below, then produce the court forms.
-                Only known details are filled — narrative answers are left
-                blank for you to complete.
-            </p>
-            <p className='form-only-tip'>
-                Testing tip: type <kbd>test</kbd> anywhere (outside a field) to
-                auto-fill the form with random sample data.
-            </p>
+        <header className='form-only-topbar'>
+            <span className='form-only-name'>SIJ Form Filler</span>
+            <span
+                className='form-only-info'
+                tabIndex={0}
+                role='button'
+                aria-label='About this tool'
+            >
+                <span className='form-only-info-icon' aria-hidden='true'>
+                    i
+                </span>
+                <span className='form-only-tooltip' role='tooltip'>
+                    Enter the case details below, then produce the court forms.
+                    Only known details are filled — narrative answers are left
+                    blank for you to complete.
+                </span>
+            </span>
         </header>
 
         <FormFiller onDataChange={onDataChange} />

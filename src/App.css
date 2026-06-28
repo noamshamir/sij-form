@@ -176,36 +176,75 @@ h2 {
   box-sizing: border-box;
   padding-bottom: 6rem;
 }
-.form-only-header {
+.form-only-topbar {
   width: 75vw;
   max-width: 1100px;
   margin: 0 auto;
-  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.25rem 0 1rem;
+  border-bottom: 1px solid #3d3d3d;
 }
-.form-only-header h1 {
+.form-only-name {
   color: #ffffff;
-  font-size: 1.8rem;
-  margin: 0.5rem 0 0.5rem;
+  font-size: 1.4rem;
+  font-weight: 600;
 }
-.form-only-header p {
+.form-only-info {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  cursor: help;
+  outline: none;
+}
+.form-only-info-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: 50%;
+  border: 1px solid #90969c;
   color: #90969c;
+  font-family: Georgia, "Times New Roman", serif;
+  font-style: italic;
   font-size: 1rem;
-  margin: 0 auto;
-  max-width: 640px;
+  line-height: 1;
+  transition: color 0.15s ease, border-color 0.15s ease;
 }
-.form-only-tip {
-  color: #6b7177;
-  font-size: 0.85rem;
-  margin: 0.75rem auto 0;
-}
-.form-only-tip kbd {
-  background: #303134;
-  border: 1px solid #4a4f55;
-  border-radius: 4px;
-  padding: 1px 6px;
-  font-family: monospace;
-  font-size: 0.85em;
+.form-only-info:hover .form-only-info-icon,
+.form-only-info:focus .form-only-info-icon {
+  border-color: #c5fba3;
   color: #c5fba3;
+}
+.form-only-tooltip {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  width: 280px;
+  background: #303134;
+  color: #e8eaed;
+  border: 1px solid #4a4f55;
+  border-radius: 8px;
+  padding: 0.75rem 0.9rem;
+  font-size: 0.85rem;
+  font-weight: 400;
+  line-height: 1.45;
+  text-align: left;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-4px);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  z-index: 50;
+}
+.form-only-info:hover .form-only-tooltip,
+.form-only-info:focus .form-only-tooltip,
+.form-only-info:focus-within .form-only-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
 }
 .form-only-actions {
   display: flex;
