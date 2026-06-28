@@ -63,7 +63,8 @@ const FormPage: React.FC<FormPageProps> = ({
                 </span>
                 <span className='form-only-tooltip' role='tooltip'>
                     Enter the case details below, then produce the court forms.
-                    Only known details are filled — narrative answers are left
+                    Enter information about the child, parent, and attorney.
+                    Only trivial fields are filled, with narrative answers left
                     blank for you to complete.
                 </span>
             </span>
@@ -104,7 +105,7 @@ const App: React.FC = () => {
             else if (type === "defendant") setDefendantData(data);
             else setAttorneyData(data);
         },
-        []
+        [],
     );
 
     const navigate = useNavigate();
@@ -113,14 +114,14 @@ const App: React.FC = () => {
             [], // form-only: no Excel input, data comes straight from the form
             normalize(plaintiffData),
             normalize(defendantData),
-            normalize(attorneyData)
+            normalize(attorneyData),
         );
         navigate("/download");
     }, [processFiles, navigate, plaintiffData, defendantData, attorneyData]);
 
     const canGenerate = Boolean(
         String(plaintiffData.first_name || "").trim() &&
-            String(plaintiffData.last_name || "").trim()
+        String(plaintiffData.last_name || "").trim(),
     );
 
     return (
