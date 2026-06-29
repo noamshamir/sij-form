@@ -240,6 +240,14 @@ export function getFormFields(plaintiff, defendant, attorney) {
             "form1[0].BodyPage1[0].Subform6[0].TextField4[6]":
                 plaintiff["middle_initial"],
 
+            // Docket No. + court Division (the dropdown options are MA county
+            // names, so the child's county selects the right division).
+            "form1[0].BodyPage1[0].Subform6[0].TextField4[0]":
+                plaintiff["case_no"],
+            "form1[0].BodyPage1[0].Subform6[0].DropDownList1[0]": {
+                select: plaintiff["county"],
+            },
+
             "form1[0].BodyPage1[0].S1[0].t1[0]": plaintiff["address"],
             "form1[0].BodyPage1[0].S1[0].TextField4[1]":
                 plaintiff["apartment_number"],
@@ -277,6 +285,7 @@ export function getFormFields(plaintiff, defendant, attorney) {
             "form1[0].BodyPage1[0].S8[0].TextField5[2]": attorney["state"],
             "form1[0].BodyPage1[0].S8[0].TextField5[1]": attorney["zip_code"],
             "form1[0].BodyPage1[0].S8[0].Phone[0]": attorney["phone_cell"],
+            "form1[0].BodyPage1[0].S8[0].TextField6[0]": attorney["bbo"],
         },
         jud_affidavit: {
             // Affidavit of Indigency is completed by the applicant (the child).
@@ -285,10 +294,18 @@ export function getFormFields(plaintiff, defendant, attorney) {
             "Street and number": plaintiff.address,
             "City or town": plaintiff.city,
             "State and Zip": plaintiff.state_and_zip,
-            // Clear the template's placeholder-hint text on fields we cannot
-            // derive, so the produced form is blank rather than printing hints.
-            Court: "",
-            "Case Name and Number if known": "",
+            // SIJ dependency filings go to the county Probate and Family Court.
+            Court: plaintiff.county
+                ? `${plaintiff.county} Probate and Family Court`
+                : "",
+            "Case Name and Number if known": [
+                [plaintiff.last_name, defendant.last_name]
+                    .filter(Boolean)
+                    .join(" v. "),
+                plaintiff.case_no,
+            ]
+                .filter(Boolean)
+                .join(", "),
         },
         jud_pfc_cjp35: {
             // Docket No. repeats
@@ -296,6 +313,16 @@ export function getFormFields(plaintiff, defendant, attorney) {
             "form1[0].#pageSet[0].Page2[1].docketno[0]": plaintiff["case_no"],
             "form1[0].#pageSet[0].Page2[2].docketno[0]": plaintiff["case_no"],
             "form1[0].BodyPage1[0].S1[0].docketno[0]": plaintiff["case_no"],
+
+            // Court division (= county) and "New" (an initial complaint, not an
+            // amendment).
+            "form1[0].BodyPage1[0].S1[0].DropDownList1[0]": {
+                select: plaintiff["county"],
+            },
+            "form1[0].BodyPage1[0].S1[0].new[0]": { check: true },
+            "form1[0].#pageSet[0].Page2[0].new[0]": { check: true },
+            "form1[0].#pageSet[0].Page2[1].new[0]": { check: true },
+            "form1[0].#pageSet[0].Page2[2].new[0]": { check: true },
 
             // Caption: Plaintiff (child)
             "form1[0].BodyPage1[0].S1[0].TextField4[1]":
@@ -365,6 +392,8 @@ export function getFormFields(plaintiff, defendant, attorney) {
 
             "form1[0].BodyPage1[0].S12[0].TextField7[0]":
                 attorney["phone_cell"],
+            "form1[0].BodyPage1[0].S12[0].TextField6[0]": attorney["bbo"],
+            "form1[0].BodyPage1[0].S12[0].TextField6[1]": attorney["email"],
         },
         jud_pfc_cjp37: {
             // Docket No. (repeats in the PDF)
@@ -372,7 +401,14 @@ export function getFormFields(plaintiff, defendant, attorney) {
             "form1[0].#pageSet[0].Page2[1].docketno[0]": plaintiff["case_no"],
             "form1[0].BodyPage1[0].S1[0].docketno[0]": plaintiff["case_no"],
 
-            // Caption: New/Amended + Division are selection fields -> leave blank
+            // Court division (= county) and "New" (initial judgment, repeated on
+            // the page-set running headers).
+            "form1[0].BodyPage1[0].S1[0].DropDownList1[0]": {
+                select: plaintiff["county"],
+            },
+            "form1[0].BodyPage1[0].S1[0].new[0]": { check: true },
+            "form1[0].#pageSet[0].Page2[0].new[0]": { check: true },
+            "form1[0].#pageSet[0].Page2[1].new[0]": { check: true },
 
             // Caption: Plaintiff (Child)
             "form1[0].BodyPage1[0].S1[0].TextField4[1]":
@@ -451,22 +487,28 @@ export function getFormFields(plaintiff, defendant, attorney) {
             // Phone-Cell is a mobile number → goes in the "Mobile" field.
             "form1[0].BodyPage1[0].PartyInformationSub[0].CellField[0]":
                 attorney.phone_cell,
-            // Clear the template's placeholder-hint text on fields we cannot
-            // derive (BBO #, firm, office phone, e-mail, court division), so the
-            // produced form is blank there rather than printing the hints.
+            // Court division (= the child's county; this is a text field despite
+            // the "Drop" name) and the attorney's BBO #, firm and e-mail.
             "form1[0].BodyPage1[0].CourtDeptSiteSub[0].DeptSubform[0].DivisionDrop[0]":
-                "",
-            "form1[0].BodyPage1[0].PartyInformationSub[0].BBOField[0]": "",
-            "form1[0].BodyPage1[0].PartyInformationSub[0].FirmField[0]": "",
+                plaintiff["county"],
+            "form1[0].BodyPage1[0].PartyInformationSub[0].BBOField[0]":
+                attorney["bbo"],
+            "form1[0].BodyPage1[0].PartyInformationSub[0].FirmField[0]":
+                attorney["firm"],
+            "form1[0].BodyPage1[0].PartyInformationSub[0].EmailField[0]":
+                attorney["email"],
+            // Office/home phone left blank — the cell already populates "Mobile".
             "form1[0].BodyPage1[0].PartyInformationSub[0].PhoneField[0]": "",
-            "form1[0].BodyPage1[0].PartyInformationSub[0].EmailField[0]": "",
         },
         cjd400: {
             // Caption + the moving attorney's signature block. The motion's
             // relief/grounds body and all selection fields are left blank.
             "form1[0].BodyPage1[0].Docket[0]": plaintiff["case_no"],
+            "form1[0].BodyPage1[0].Divisions[0]": { select: plaintiff["county"] },
             "form1[0].BodyPage1[0].Plaintiff[0]": plaintiff["full_name"],
             "form1[0].BodyPage1[0].Defendant[0]": defendant["full_name"],
+            // "Now comes ___ (name of moving party)" — the child/plaintiff.
+            "form1[0].BodyPage1[0].MovingParty[0]": plaintiff["full_name"],
             "form1[0].BodyPage1[0].Print[0]": attorney["full_name"],
             "form1[0].BodyPage1[0].Add[0]": [
                 attorney.address,
@@ -478,6 +520,23 @@ export function getFormFields(plaintiff, defendant, attorney) {
             "form1[0].BodyPage1[0].State[0]": attorney["state"],
             "form1[0].BodyPage1[0].Zip[0]": attorney["zip_code"],
             "form1[0].BodyPage1[0].TelNo[0]": attorney["phone_cell"],
+            "form1[0].BodyPage1[0].BBO[0]": attorney["bbo"],
+            // Page 2 Certificate of Service — caption + the party served (the
+            // parent/defendant). Delivery method/date are left for the filer.
+            "form1[0].Page2[0].#subform[0].Docket[0]": plaintiff["case_no"],
+            "form1[0].Page2[0].#subform[0].Division[0]": {
+                select: plaintiff["county"],
+            },
+            "form1[0].Page2[0].#subform[0].Name[0]": defendant["full_name"],
+            "form1[0].Page2[0].#subform[0].Add[0]": [
+                defendant.address,
+                defendant.apartment_number,
+            ]
+                .filter(Boolean)
+                .join(", "),
+            "form1[0].Page2[0].#subform[0].CityTown[0]": defendant["city"],
+            "form1[0].Page2[0].#subform[0].State[0]": defendant["state"],
+            "form1[0].Page2[0].#subform[0].Zip[0]": defendant["zip_code"],
         },
         // CJP 31 is a flat, non-fillable form (dynamic XFA) — produced blank.
         cjp31: {},
@@ -487,10 +546,36 @@ export function getFormFields(plaintiff, defendant, attorney) {
             "form1[0].BodyPage1[0].sb_CourtDeptSite[0].CaseName[0]": `${plaintiff.full_name} v. ${defendant.full_name}`,
             "form1[0].BodyPage1[0].sb_CourtDeptSite[0].sb_Dept[0].DocketNo[0]":
                 plaintiff["case_no"],
+            "form1[0].BodyPage1[0].sb_CourtDeptSite[0].sb_Dept[0].DivisionCounty[0]":
+                plaintiff["county"],
+            // Court department = Probate & Family Court (option "6"); SIJ
+            // predicate orders are filed there.
+            "form1[0].BodyPage1[0].sb_CourtDeptSite[0].DeptRBSub[0].DeptRB[0]": {
+                select: "6",
+            },
+            // The attorney is filing/signing this affidavit for the minor child
+            // (the "for [child]" name is filled below), so tick both boxes.
+            "form1[0].BodyPage1[0].sb_partychkbox[0].cb_attrFiling[0]": {
+                check: true,
+            },
+            "form1[0].BodyPage3[0].Subform2[0].cb_attrSign[0]": { check: true },
             "form1[0].BodyPage1[0].sb_partychkbox[0].txt_forPartyName[0]":
                 plaintiff["full_name"],
             "form1[0].BodyPage1[0].sb_childList[0].txt_ChildA_name[0]":
                 plaintiff["full_name"],
+            // Child A current address (same as the child's residence).
+            "form1[0].BodyPage2[0].sb_listChildAddr[0].sb_ChildA[0].txt_currentAddr[0]":
+                [
+                    [plaintiff.address, plaintiff.apartment_number]
+                        .filter(Boolean)
+                        .join(" "),
+                    plaintiff.city,
+                    [plaintiff.state, plaintiff.zip_code]
+                        .filter(Boolean)
+                        .join(" "),
+                ]
+                    .filter(Boolean)
+                    .join(", "),
             "form1[0].BodyPage3[0].Subform2[0].txt_printTypeName[0]":
                 plaintiff["full_name"],
             "form1[0].BodyPage3[0].Subform2[0].txt_homeaddr[0]": [
@@ -506,6 +591,9 @@ export function getFormFields(plaintiff, defendant, attorney) {
                 plaintiff["phone_cell"],
             "form1[0].BodyPage3[0].Subform2[0].txt_AttrName[0]":
                 attorney["full_name"],
+            // txt_Email sits in the (child) party-contact block, so leave it
+            // blank rather than putting the attorney's e-mail there.
+            "form1[0].BodyPage3[0].Subform2[0].txt_BBO_bar[0]": attorney["bbo"],
         },
     };
 }
@@ -520,10 +608,29 @@ async function fillPdf(templateUrl, fields) {
     const form = pdfDoc.getForm();
     Object.entries(fields).forEach(([key, value]) => {
         try {
-            const field = form.getTextField(key);
-            field.setText(String(value));
+            if (value && typeof value === "object" && value.check === true) {
+                // Checkbox to tick.
+                form.getCheckBox(key).check();
+            } else if (value && typeof value === "object" && "select" in value) {
+                // Radio group or dropdown: only select when the wanted option
+                // actually exists (matched case-insensitively), so an unexpected
+                // value simply leaves the field blank instead of throwing.
+                const wanted = String(value.select ?? "").trim();
+                if (!wanted) return;
+                const field = form.getField(key);
+                const opts =
+                    typeof field.getOptions === "function"
+                        ? field.getOptions()
+                        : [];
+                const match = opts.find(
+                    (o) => o.trim().toLowerCase() === wanted.toLowerCase()
+                );
+                if (match !== undefined) field.select(match);
+            } else {
+                form.getTextField(key).setText(String(value));
+            }
         } catch (e) {
-            console.warn(`Field ${key} not found:`, e);
+            console.warn(`Field ${key} not set:`, e);
         }
     });
     const pdfBytes = await pdfDoc.save();

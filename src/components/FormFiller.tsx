@@ -15,20 +15,10 @@ interface FormFillerProps {
 
 const TAB_TYPES: PersonType[] = ["plaintiff", "defendant", "attorney"];
 
-// Friendly description of each role so the (shared) field set makes sense.
-const TAB_META: Record<PersonType, { title: string; blurb: string }> = {
-    plaintiff: {
-        title: "Child (Plaintiff)",
-        blurb: "The minor who is the subject of the petition.",
-    },
-    defendant: {
-        title: "Parent (Defendant)",
-        blurb: "A parent or prior custodian named in the case.",
-    },
-    attorney: {
-        title: "Attorney",
-        blurb: "The attorney appearing on behalf of the child.",
-    },
+const TAB_META: Record<PersonType, { title: string }> = {
+    plaintiff: { title: "Child (Plaintiff)" },
+    defendant: { title: "Parent (Defendant)" },
+    attorney: { title: "Attorney" },
 };
 
 // Same 17 fields as the existing step, in the order the forms expect them.
@@ -52,7 +42,21 @@ const formFields = [
     { key: "phone_cell", label: "Phone (Cell)", type: "text" },
 ];
 
-const blank = () => Object.fromEntries(formFields.map((f) => [f.key, ""]));
+// Extra fields shown only on the Attorney tab (used by several forms'
+// signature blocks).
+const attorneyExtraFields = [
+    { key: "bbo", label: "B.B.O. #", type: "text" },
+    { key: "email", label: "Email", type: "text" },
+    { key: "firm", label: "Firm / Agency", type: "text" },
+];
+
+const fieldsForTab = (tab: PersonType) =>
+    tab === "attorney" ? [...formFields, ...attorneyExtraFields] : formFields;
+
+const blank = () =>
+    Object.fromEntries(
+        [...formFields, ...attorneyExtraFields].map((f) => [f.key, ""])
+    );
 
 // --- Random test-data generation -----------------------------------------
 const FIRST_NAMES = ["Maria", "Juan", "Sofia", "Carlos", "Ana", "Luis", "Camila", "Diego", "Valeria", "Mateo", "Gabriela", "Andres"];
@@ -115,16 +119,21 @@ function randomCase() {
         nationality,
     };
 
+    const aFirst = pick(ATTORNEY_FIRST);
+    const aLast = pick(ATTORNEY_LAST);
     const attorney = {
         ...base(),
-        first_name: pick(ATTORNEY_FIRST),
+        first_name: aFirst,
         middle_name: pick(MIDDLE_NAMES),
-        last_name: pick(ATTORNEY_LAST),
+        last_name: aLast,
         address: `${ri(1, 999)} ${pick(STREETS)}`,
         apartment_number: `Suite ${ri(100, 900)}`,
         city: pick(CITIES),
         zip_code: zip(),
         phone_cell: phone(),
+        bbo: String(ri(500000, 699999)),
+        email: `${aFirst}.${aLast}@${pick(["legalaid", "justicecenter", "lawgroup"])}.org`.toLowerCase(),
+        firm: `${aLast} ${pick(["Law Group", "Legal Services", "& Associates", "Immigration Law"])}`,
     };
 
     return { plaintiff, defendant, attorney };
@@ -250,14 +259,11 @@ export const FormFiller: React.FC<FormFillerProps> = ({ onDataChange }) => {
             <div className='form-only-body'>
                 <div className='form-container'>
                     <h2>{TAB_META[activeTab].title}</h2>
-                    <p className='form-only-blurb'>
-                        {TAB_META[activeTab].blurb}
-                    </p>
                     <form
                         className='form-only-grid'
                         onSubmit={(e) => e.preventDefault()}
                     >
-                        {formFields.map((f) => (
+                        {fieldsForTab(activeTab).map((f) => (
                             <label key={f.key}>
                                 {f.label}
                                 <input

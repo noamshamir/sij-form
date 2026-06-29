@@ -25,6 +25,9 @@ const personKeys = [
     "case_no",
     "i765_receipt_date",
     "phone_cell",
+    "bbo",
+    "email",
+    "firm",
 ];
 
 const normalize = (data: Record<string, any>) => {
