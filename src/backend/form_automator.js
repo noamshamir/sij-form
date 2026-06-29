@@ -1,6 +1,32 @@
 import * as XLSX from "xlsx";
 import { combineExcelFiles } from "./main";
-import { PDFDocument } from "pdf-lib";
+import { PDFDocument, StandardFonts } from "pdf-lib";
+
+// CJP 31 ships only as a flat (dynamic-XFA) PDF with no fillable AcroForm
+// fields, so we create text fields at fixed coordinates instead. Coordinates
+// are PDF points (bottom-left origin); page is 0-based. Derived from the
+// form's printed labels and verified by rendering.
+const CJP31_FIELD_RECTS = {
+    caseName_p1: { page: 0, x: 60, y: 692, w: 545, h: 13 },
+    docket_p1: { page: 0, x: 320, y: 733, w: 110, h: 13 },
+    division_p1: { page: 0, x: 405, y: 683, w: 118, h: 12 },
+    serveName: { page: 0, x: 232, y: 435, w: 180, h: 12 },
+    lastAddr: { page: 0, x: 80, y: 379, w: 285, h: 12 },
+    cityStZip: { page: 0, x: 80, y: 342, w: 285, h: 12 },
+    caseName_p2: { page: 1, x: 90, y: 760, w: 420, h: 12 },
+    docket_p2: { page: 1, x: 540, y: 767, w: 70, h: 11 },
+    caseName_p3: { page: 2, x: 90, y: 760, w: 420, h: 12 },
+    docket_p3: { page: 2, x: 540, y: 767, w: 70, h: 11 },
+    atName: { page: 2, x: 315, y: 623, w: 200, h: 12 },
+    atAddr: { page: 2, x: 315, y: 595, w: 170, h: 12 },
+    atApt: { page: 2, x: 505, y: 595, w: 70, h: 12 },
+    atCity: { page: 2, x: 315, y: 567, w: 150, h: 12 },
+    atState: { page: 2, x: 485, y: 567, w: 45, h: 12 },
+    atZip: { page: 2, x: 543, y: 567, w: 55, h: 12 },
+    atPhone: { page: 2, x: 375, y: 538, w: 230, h: 11 },
+    atBBO: { page: 2, x: 375, y: 520, w: 230, h: 11 },
+    atEmail: { page: 2, x: 375, y: 502, w: 230, h: 11 },
+};
 
 // Template URLs. Resolve against PUBLIC_URL so the fetch works regardless of
 // whether the app is served from the site root or a sub-path (e.g. /form-only).
@@ -538,8 +564,46 @@ export function getFormFields(plaintiff, defendant, attorney) {
             "form1[0].Page2[0].#subform[0].State[0]": defendant["state"],
             "form1[0].Page2[0].#subform[0].Zip[0]": defendant["zip_code"],
         },
-        // CJP 31 is a flat, non-fillable form (dynamic XFA) — produced blank.
-        cjp31: {},
+        // CJP 31 (flat form): values keyed to CJP31_FIELD_RECTS. The motion is
+        // used to serve an un-locatable parent, so the "person to serve" is the
+        // defendant. The attempts-to-locate / diligent-search narrative and all
+        // checkboxes are left for the filer.
+        cjp31: (() => {
+            const caseName = [plaintiff.full_name, defendant.full_name]
+                .filter(Boolean)
+                .join(" v. ");
+            const defCSZ = [
+                defendant.city,
+                [defendant.state, defendant.zip_code]
+                    .filter(Boolean)
+                    .join(" "),
+            ]
+                .filter(Boolean)
+                .join(", ");
+            return {
+                caseName_p1: caseName,
+                caseName_p2: caseName,
+                caseName_p3: caseName,
+                docket_p1: plaintiff.case_no,
+                docket_p2: plaintiff.case_no,
+                docket_p3: plaintiff.case_no,
+                division_p1: plaintiff.county,
+                serveName: defendant.full_name,
+                lastAddr: [defendant.address, defendant.apartment_number]
+                    .filter(Boolean)
+                    .join(", "),
+                cityStZip: defCSZ,
+                atName: attorney.full_name,
+                atAddr: attorney.address,
+                atApt: attorney.apartment_number,
+                atCity: attorney.city,
+                atState: attorney.state,
+                atZip: attorney.zip_code,
+                atPhone: attorney.phone_cell,
+                atBBO: attorney.bbo,
+                atEmail: attorney.email,
+            };
+        })(),
         tc0050: {
             // Caption + child A + the party-contact/attorney block. The lists of
             // other proceedings / persons and all selections are left blank.
@@ -601,11 +665,41 @@ export function getFormFields(plaintiff, defendant, attorney) {
 /**
  * Fill a template PDF for a set of fields, return a Blob.
  */
-async function fillPdf(templateUrl, fields) {
+async function fillPdf(templateUrl, fields, fieldRects) {
     const res = await fetch(templateUrl);
     const arrayBuffer = await res.arrayBuffer();
     const pdfDoc = await PDFDocument.load(arrayBuffer);
     const form = pdfDoc.getForm();
+
+    if (fieldRects) {
+        // Flat template (no AcroForm): create a text field at each known
+        // rectangle, then fill it.
+        const helv = await pdfDoc.embedFont(StandardFonts.Helvetica);
+        const pages = pdfDoc.getPages();
+        for (const [key, value] of Object.entries(fields)) {
+            const r = fieldRects[key];
+            if (!r || String(value ?? "") === "") continue;
+            try {
+                const tf = form.createTextField(`cjp31_${key}`);
+                tf.addToPage(pages[r.page], {
+                    x: r.x,
+                    y: r.y,
+                    width: r.w,
+                    height: r.h,
+                    borderWidth: 0,
+                    font: helv,
+                });
+                tf.setFontSize(Math.max(7, Math.min(9.5, r.h * 0.7)));
+                tf.setText(String(value));
+            } catch (e) {
+                console.warn(`Could not place field ${key}:`, e);
+            }
+        }
+        form.updateFieldAppearances(helv);
+        const pdfBytes = await pdfDoc.save();
+        return new Blob([pdfBytes], { type: "application/pdf" });
+    }
+
     Object.entries(fields).forEach(([key, value]) => {
         try {
             if (value && typeof value === "object" && value.check === true) {
@@ -681,7 +775,8 @@ export async function processFormsForBoth(
     // Fill each template and collect outputs
     const output = [];
     for (const [key, url] of Object.entries(TEMPLATE_URLS)) {
-        const blob = await fillPdf(url, formFieldsMap[key]);
+        const rects = key === "cjp31" ? CJP31_FIELD_RECTS : undefined;
+        const blob = await fillPdf(url, formFieldsMap[key], rects);
         // now filename uses a real full_name
         const filename = `${key}.${plaintiffs.full_name}.pdf`;
         output.push({ name: filename, blob });
