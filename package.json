@@ -1,5 +1,5 @@
 {
-  "homepage": "https://sij.asylumtools.com/form-only",
+  "homepage": "https://sij.asylumtools.com",
   "name": "frontend",
   "version": "0.1.0",
   "private": true,
@@ -24,8 +24,7 @@
     "start": "PORT=3001 HOST=localhost react-scripts start",
     "build": "react-scripts build",
     "predeploy": "npm run build",
-    "deploy": "gh-pages -d build",
-    "deploy:preview": "npm run build && gh-pages -d build -e form-only -a -m \"deploy form-only preview\"",
+    "deploy": "gh-pages -d build --remove \"{!(upload|form-only),!(upload|form-only)/**}\" -m \"deploy form app to root\"",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
