@@ -3,20 +3,80 @@ import { combineExcelFiles } from "./main";
 import { PDFDocument, StandardFonts } from "pdf-lib";
 
 // CJP 31 ships only as a flat (dynamic-XFA) PDF with no fillable AcroForm
-// fields, so we create text fields at fixed coordinates instead. Coordinates
+// fields, so we create form fields at fixed coordinates instead. Coordinates
 // are PDF points (bottom-left origin); page is 0-based. Derived from the
 // form's printed labels and verified by rendering.
+//
+// Every entry becomes a field in the output — entries with a value in
+// getFormFields() are pre-filled; the rest are created empty so the attorney
+// can complete the whole form digitally (service options, dates, the
+// attempts-to-locate tables, signature). type: "checkbox" makes a checkbox
+// (default is a text field); multiline allows wrapped text.
 const CJP31_FIELD_RECTS = {
     caseName_p1: { page: 0, x: 60, y: 692, w: 545, h: 13 },
     docket_p1: { page: 0, x: 320, y: 733, w: 110, h: 13 },
     division_p1: { page: 0, x: 405, y: 683, w: 118, h: 12 },
+    // Service options ("check only ONE").
+    optPublicationOnly: { page: 0, x: 29.5, y: 625, w: 10, h: 10, type: "checkbox" },
+    optPublicationAndMail: { page: 0, x: 29.5, y: 580.5, w: 10, h: 10, type: "checkbox" },
+    optOtherMeans: { page: 0, x: 29.5, y: 526.5, w: 10, h: 10, type: "checkbox" },
+    optPleaseSpecify: { page: 0, x: 299.5, y: 526.5, w: 10, h: 10, type: "checkbox" },
+    optInstructMe: { page: 0, x: 420, y: 526.5, w: 10, h: 10, type: "checkbox" },
+    otherMeansSpecify: { page: 0, x: 48, y: 505, w: 535, h: 13 },
+    // General information.
     serveName: { page: 0, x: 232, y: 435, w: 180, h: 12 },
+    addrUnknown: { page: 0, x: 327.5, y: 387.5, w: 10, h: 10, type: "checkbox" },
     lastAddr: { page: 0, x: 80, y: 379, w: 285, h: 12 },
     cityStZip: { page: 0, x: 80, y: 342, w: 285, h: 12 },
+    lastLivedDate: { page: 0, x: 265, y: 307, w: 172, h: 13 },
+    lastContactDate: { page: 0, x: 427, y: 262, w: 148, h: 13 },
+    // Attempts to locate (page 1).
+    attPhone: { page: 0, x: 48, y: 184.5, w: 10, h: 10, type: "checkbox" },
+    phoneNumber: { page: 0, x: 446, y: 181, w: 137, h: 12 },
+    phoneResponse: { page: 0, x: 66, y: 150.5, w: 517, h: 13 },
+    attEmail: { page: 0, x: 48, y: 122, w: 10, h: 10, type: "checkbox" },
+    emailAddress: { page: 0, x: 367, y: 119, w: 216, h: 12 },
+    emailResponse: { page: 0, x: 66, y: 81, w: 517, h: 13 },
+    // Attempts to locate (page 2).
     caseName_p2: { page: 1, x: 90, y: 760, w: 420, h: 12 },
     docket_p2: { page: 1, x: 540, y: 767, w: 70, h: 11 },
+    attSocial: { page: 1, x: 47.5, y: 715, w: 10, h: 10, type: "checkbox" },
+    socialSite1: { page: 1, x: 66, y: 657, w: 185, h: 15 },
+    socialDate1: { page: 1, x: 253, y: 657, w: 157, h: 15 },
+    socialResp1: { page: 1, x: 412, y: 657, w: 172, h: 15 },
+    socialSite2: { page: 1, x: 66, y: 636, w: 185, h: 15 },
+    socialDate2: { page: 1, x: 253, y: 636, w: 157, h: 15 },
+    socialResp2: { page: 1, x: 412, y: 636, w: 172, h: 15 },
+    attInternet: { page: 1, x: 47.5, y: 603.5, w: 10, h: 10, type: "checkbox" },
+    webSite1: { page: 1, x: 66, y: 546.5, w: 185, h: 15 },
+    webDate1: { page: 1, x: 253, y: 546.5, w: 157, h: 15 },
+    webResp1: { page: 1, x: 412, y: 546.5, w: 172, h: 15 },
+    webSite2: { page: 1, x: 66, y: 525.5, w: 185, h: 15 },
+    webDate2: { page: 1, x: 253, y: 525.5, w: 157, h: 15 },
+    webResp2: { page: 1, x: 412, y: 525.5, w: 172, h: 15 },
+    attChildSupport: { page: 1, x: 47.5, y: 495, w: 10, h: 10, type: "checkbox" },
+    attContacts: { page: 1, x: 47.5, y: 451, w: 10, h: 10, type: "checkbox" },
+    contactName1: { page: 1, x: 66, y: 410, w: 143, h: 14 },
+    contactRel1: { page: 1, x: 211, y: 410, w: 92, h: 14 },
+    contactDate1: { page: 1, x: 305, y: 410, w: 92, h: 14 },
+    contactTold1: { page: 1, x: 399, y: 410, w: 185, h: 14 },
+    contactName2: { page: 1, x: 66, y: 391, w: 143, h: 14 },
+    contactRel2: { page: 1, x: 211, y: 391, w: 92, h: 14 },
+    contactDate2: { page: 1, x: 305, y: 391, w: 92, h: 14 },
+    contactTold2: { page: 1, x: 399, y: 391, w: 185, h: 14 },
+    attMilitary: { page: 1, x: 47.5, y: 360, w: 10, h: 10, type: "checkbox" },
+    attOther: { page: 1, x: 47.5, y: 307, w: 10, h: 10, type: "checkbox" },
+    otherEfforts: { page: 1, x: 66, y: 269, w: 517, h: 26, multiline: true },
+    // Attempts to serve (page 2).
+    serveMailedPetition: { page: 1, x: 47.5, y: 190, w: 10, h: 10, type: "checkbox" },
+    serveMailedDate: { page: 1, x: 414, y: 186.5, w: 129, h: 12 },
+    serveSheriff: { page: 1, x: 47.5, y: 136, w: 10, h: 10, type: "checkbox" },
+    serveNotAttempted: { page: 1, x: 47.5, y: 82, w: 10, h: 10, type: "checkbox" },
+    // Signature block (page 3). The "FOR COURT USE ONLY" section is left alone.
     caseName_p3: { page: 2, x: 90, y: 760, w: 420, h: 12 },
     docket_p3: { page: 2, x: 540, y: 767, w: 70, h: 11 },
+    signDate: { page: 2, x: 53, y: 665.5, w: 213, h: 13 },
+    signature: { page: 2, x: 281, y: 669, w: 302, h: 13 },
     atName: { page: 2, x: 315, y: 623, w: 200, h: 12 },
     atAddr: { page: 2, x: 315, y: 595, w: 170, h: 12 },
     atApt: { page: 2, x: 505, y: 595, w: 70, h: 12 },
@@ -39,8 +99,9 @@ const TEMPLATE_URLS = {
     notice_of_appearance: `${BASE}/templates/Notice of Appearance Form - 2023.pdf`,
     cjd400: `${BASE}/updated_templates/Motion (CJ-D 400).pdf`,
     // CJP 31's official copy is a dynamic XFA form that renders "Please wait" in
-    // non-Adobe viewers; the flattened templates/ copy renders (it has no fillable
-    // fields, so it is produced blank for the user to complete by hand).
+    // non-Adobe viewers; the flattened templates/ copy renders. It has no fillable
+    // fields of its own, so fillPdf creates them at CJP31_FIELD_RECTS coordinates —
+    // data-backed ones pre-filled, the rest empty for the attorney to complete.
     cjp31: `${BASE}/templates/Motion for Service by Alternate Means & Affidavit (CJP 31)_07-16-2024_1038.pdf`,
     tc0050: `${BASE}/updated_templates/Child Care or Custody Disclosure Affidavit (TC0050).pdf`,
 };
@@ -407,6 +468,12 @@ export function getFormFields(plaintiff, defendant, attorney) {
             "form1[0].BodyPage1[0].S8[0].TextField4[0]":
                 plaintiff["nationality"],
 
+            // Wherefore/request section: "find that it is not in Child's best
+            // interest to return to, ______ (Country)" — same datum as item 7.
+            // The request checkbox itself is left for the attorney.
+            "form1[0].BodyPage1[0].S11a[0].TextField4[0]":
+                plaintiff["nationality"],
+
             // Signature block: Attorney
             "form1[0].BodyPage1[0].S12[0].TextField5[0]": attorney["full_name"],
             "form1[0].BodyPage1[0].S12[0].TextField5[4]": attorney["address"],
@@ -672,15 +739,29 @@ async function fillPdf(templateUrl, fields, fieldRects) {
     const form = pdfDoc.getForm();
 
     if (fieldRects) {
-        // Flat template (no AcroForm): create a text field at each known
-        // rectangle, then fill it.
+        // Flat template (no AcroForm): create a form field at every known
+        // rectangle. Data-backed fields are pre-filled; the rest are created
+        // empty so the attorney can complete the form digitally.
         const helv = await pdfDoc.embedFont(StandardFonts.Helvetica);
         const pages = pdfDoc.getPages();
-        for (const [key, value] of Object.entries(fields)) {
-            const r = fieldRects[key];
-            if (!r || String(value ?? "") === "") continue;
+        for (const [key, r] of Object.entries(fieldRects)) {
+            const value = fields[key];
             try {
+                if (r.type === "checkbox") {
+                    const cb = form.createCheckBox(`cjp31_${key}`);
+                    cb.addToPage(pages[r.page], {
+                        x: r.x,
+                        y: r.y,
+                        width: r.w,
+                        height: r.h,
+                        borderWidth: 0,
+                    });
+                    if (value && typeof value === "object" && value.check)
+                        cb.check();
+                    continue;
+                }
                 const tf = form.createTextField(`cjp31_${key}`);
+                if (r.multiline) tf.enableMultiline();
                 tf.addToPage(pages[r.page], {
                     x: r.x,
                     y: r.y,
@@ -690,7 +771,7 @@ async function fillPdf(templateUrl, fields, fieldRects) {
                     font: helv,
                 });
                 tf.setFontSize(Math.max(7, Math.min(9.5, r.h * 0.7)));
-                tf.setText(String(value));
+                if (String(value ?? "") !== "") tf.setText(String(value));
             } catch (e) {
                 console.warn(`Could not place field ${key}:`, e);
             }
