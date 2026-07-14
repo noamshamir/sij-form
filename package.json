@@ -1,5 +1,5 @@
 {
-  "homepage": "https://sij.asylumtools.com",
+  "homepage": "https://sij.asylumtools.com/upload",
   "name": "frontend",
   "version": "0.1.0",
   "private": true,
@@ -24,7 +24,7 @@
     "start": "PORT=3001 HOST=localhost react-scripts start",
     "build": "react-scripts build",
     "predeploy": "npm run build",
-    "deploy": "gh-pages -d build",
+    "deploy": "gh-pages -d build -e upload -a -m \"deploy upload app\"",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
