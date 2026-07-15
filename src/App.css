@@ -183,10 +183,6 @@ h2 {
   gap: 0.75rem;
   margin-top: 2rem;
 }
-.form-only-hint {
-  color: #90969c;
-  font-size: 0.9rem;
-}
 .submit-button.form-only-submit {
   width: auto;
   min-width: 16rem;
