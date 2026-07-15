@@ -44,21 +44,24 @@ interface FormPageProps {
     onDataChange: (type: PersonType, data: Record<string, any>) => void;
     onGenerate: () => void;
     isProcessing: boolean;
+    canGenerate: boolean;
 }
 const FormPage: React.FC<FormPageProps> = ({
     onDataChange,
     onGenerate,
     isProcessing,
+    canGenerate,
 }) => (
     <div className='form-only-page'>
         <FormFiller onDataChange={onDataChange} />
 
+        {/* Pinned to the viewport bottom so it stays visible while scrolling. */}
         <div className='form-only-actions'>
             <button
                 className='submit-button form-only-submit'
-                disabled={isProcessing}
+                disabled={isProcessing || !canGenerate}
                 onClick={() => {
-                    if (!isProcessing) onGenerate();
+                    if (!isProcessing && canGenerate) onGenerate();
                 }}
             >
                 {isProcessing ? "Producing forms…" : "Produce forms"}
@@ -95,6 +98,11 @@ const App: React.FC = () => {
         navigate("/download");
     }, [processFiles, navigate, plaintiffData, defendantData, attorneyData]);
 
+    const canGenerate = Boolean(
+        String(plaintiffData.first_name || "").trim() &&
+        String(plaintiffData.last_name || "").trim(),
+    );
+
     return (
         <div className='App'>
             <Routes>
@@ -105,6 +113,7 @@ const App: React.FC = () => {
                             onDataChange={handleDataChange}
                             onGenerate={handleGenerate}
                             isProcessing={isProcessing}
+                            canGenerate={canGenerate}
                         />
                     }
                 />

@@ -174,14 +174,24 @@ h2 {
 .form-only-page {
   width: 100%;
   box-sizing: border-box;
-  padding-bottom: 6rem;
+  /* Clearance so the last fields can scroll above the fixed action bar. */
+  padding-bottom: 7rem;
 }
 .form-only-actions {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.75rem;
-  margin-top: 2rem;
+  justify-content: center;
+  padding: 1.5rem 0 1.25rem;
+  background: linear-gradient(
+    to top,
+    #202124 55%,
+    rgba(32, 33, 36, 0.85) 80%,
+    rgba(32, 33, 36, 0)
+  );
+  z-index: 100;
 }
 .submit-button.form-only-submit {
   width: auto;
