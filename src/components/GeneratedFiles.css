@@ -55,14 +55,6 @@
     color: #c5fba3;
 }
 
-.generated-action-button.generated-download-button:hover svg {
-    color: #239e91;
-}
-
-.generated-action-button:hover {
-    color: #212529;
-}
-
 .generated-action-button span {
     margin-left: 4px;
 }
@@ -97,11 +89,6 @@
     border-radius: 2rem;
     font-size: 0.9rem;
     cursor: pointer;
-    transition: background-color 0.2s;
-}
-
-.generated-download-all-button:hover {
-    background-color: #239e91;
 }
 
 /* ...your existing .generated-files-list, .generated-file-item, etc. */

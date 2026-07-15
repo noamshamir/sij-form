@@ -44,30 +44,3 @@
         width: 92vw;
     }
 }
-
-/* Toast shown after the "type test" auto-fill trigger fires. */
-.form-only-toast {
-    position: fixed;
-    top: 1.25rem;
-    left: 50%;
-    transform: translateX(-50%);
-    background: #c5fba3;
-    color: #202124;
-    padding: 0.6rem 1.4rem;
-    border-radius: 2rem;
-    font-weight: 600;
-    font-size: 0.95rem;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
-    z-index: 1000;
-    animation: form-only-toast-in 0.18s ease-out;
-}
-@keyframes form-only-toast-in {
-    from {
-        opacity: 0;
-        transform: translate(-50%, -8px);
-    }
-    to {
-        opacity: 1;
-        transform: translate(-50%, 0);
-    }
-}

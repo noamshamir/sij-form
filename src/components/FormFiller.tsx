@@ -150,7 +150,6 @@ export const FormFiller: React.FC<FormFillerProps> = ({ onDataChange }) => {
     const [attorneyData, setAttorneyData] = useState<Record<string, any>>(
         blank()
     );
-    const [toast, setToast] = useState("");
 
     const dataFor = (tab: PersonType) =>
         tab === "plaintiff"
@@ -199,7 +198,6 @@ export const FormFiller: React.FC<FormFillerProps> = ({ onDataChange }) => {
         onDataChange("plaintiff", plaintiff);
         onDataChange("defendant", defendant);
         onDataChange("attorney", attorney);
-        setToast("Filled with random test data");
     }, [onDataChange]);
 
     // Listen for the trigger word typed anywhere except inside a field.
@@ -228,18 +226,10 @@ export const FormFiller: React.FC<FormFillerProps> = ({ onDataChange }) => {
         return () => window.removeEventListener("keydown", onKey);
     }, [fillRandom]);
 
-    // Auto-dismiss the toast.
-    useEffect(() => {
-        if (!toast) return;
-        const id = window.setTimeout(() => setToast(""), 2500);
-        return () => window.clearTimeout(id);
-    }, [toast]);
-
     const data = dataFor(activeTab);
 
     return (
         <div className='people-selector form-filler'>
-            {toast && <div className='form-only-toast'>{toast}</div>}
             {/* Tabs */}
             <div className='tabs'>
                 {TAB_TYPES.map((tab) => (
