@@ -53,26 +53,6 @@ const FormPage: React.FC<FormPageProps> = ({
     canGenerate,
 }) => (
     <div className='form-only-page'>
-        <header className='form-only-topbar'>
-            <span className='form-only-name'>SIJ Form Filler</span>
-            <span
-                className='form-only-info'
-                tabIndex={0}
-                role='button'
-                aria-label='About this tool'
-            >
-                <span className='form-only-info-icon' aria-hidden='true'>
-                    i
-                </span>
-                <span className='form-only-tooltip' role='tooltip'>
-                    Enter the case details below, then produce the court forms.
-                    Enter information about the child, parent, and attorney.
-                    Only trivial fields are filled, with narrative answers left
-                    blank for you to complete.
-                </span>
-            </span>
-        </header>
-
         <FormFiller onDataChange={onDataChange} />
 
         <div className='form-only-actions'>
